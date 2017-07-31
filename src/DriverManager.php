@@ -8,6 +8,7 @@ use Mannysoft\SMS\Drivers\EmailSMS;
 use Mannysoft\SMS\Drivers\LogSMS;
 use Mannysoft\SMS\Drivers\NexmoSMS;
 use Mannysoft\SMS\Drivers\PlivoSMS;
+use Mannysoft\SMS\Drivers\SMSAPISMS;
 use Mannysoft\SMS\Drivers\TwilioSMS;
 
 class DriverManager extends Manager
@@ -204,6 +205,20 @@ class DriverManager extends Manager
             $config['auth_id'],
             $config['auth_token']
         );
+
+        return $provider;
+    }
+    
+    /**
+     * Create an instance of the SMSAPI driver.
+     *
+     * @return SMSAPI
+     */
+    protected function createSMSAPIDriver()
+    {
+        $config = $this->app['config']->get('sms.sms_api', []);
+
+        $provider = new SMSAPISMS($config['auth_token']);
 
         return $provider;
     }

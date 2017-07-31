@@ -51,7 +51,11 @@ return [
         'auth_id'    => env('PLIVO_AUTH_ID', 'Your Plivo Auth ID'),
         'auth_token' => env('PLIVO_AUTH_TOKEN', 'Your Plivo Auth Token'),
     ],
-
+    
+    'sms_api' => [
+        'auth_token' => env('SMS_API_AUTH_TOKEN', 'Your SMS API Auth Token'),
+    ],
+    
     'twilio' => [
         'account_sid' => env('TWILIO_SID', 'Your Twilio SID'),
         'auth_token'  => env('TWILIO_TOKEN', 'Your Twilio Token'),
