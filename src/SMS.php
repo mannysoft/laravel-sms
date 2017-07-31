@@ -56,11 +56,11 @@ class SMS
      */
     public function driver($driver)
     {
-        $this->container['sms.sender'] = $this->container->share(function ($app) use ($driver) {
+        $this->container['sms.driver'] = $this->container->singleton(function ($app) use ($driver) {
             return (new DriverManager($app))->driver($driver);
         });
 
-        $this->driver = $this->container['sms.sender'];
+        $this->driver = $this->container['sms.driver'];
     }
 
     /**

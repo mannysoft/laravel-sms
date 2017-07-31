@@ -31,7 +31,7 @@ class SMSServiceProvider extends ServiceProvider
     {
         $this->app->singleton('sms', function ($app) {
             $this->registerSender();
-            $sms = new SMS($app['sms.sender']);
+            $sms = new SMS($app['sms.driver']);
             $this->setSMSDependencies($sms, $app);
 
             // Set the from setting
@@ -48,7 +48,7 @@ class SMSServiceProvider extends ServiceProvider
      */
     public function registerSender()
     {
-        $this->app->singleton('sms.sender', function ($app) {
+        $this->app->singleton('sms.driver', function ($app) {
             return (new DriverManager($app))->driver();
         });
     }
@@ -72,6 +72,6 @@ class SMSServiceProvider extends ServiceProvider
      */
     public function provides()
     {
-        return ['sms', 'sms.sender'];
+        return ['sms', 'sms.driver'];
     }
 }
