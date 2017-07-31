@@ -1,10 +1,10 @@
 <?php
 
-namespace SimpleSoftwareIO\SMS\Drivers;
+namespace Mannysoft\SMS\Drivers;
 
 use GuzzleHttp\Client;
-use SimpleSoftwareIO\SMS\MakesRequests;
-use SimpleSoftwareIO\SMS\OutgoingMessage;
+use Mannysoft\SMS\MakesRequests;
+use Mannysoft\SMS\OutgoingMessage;
 
 class NexmoSMS extends AbstractSMS implements DriverInterface
 {

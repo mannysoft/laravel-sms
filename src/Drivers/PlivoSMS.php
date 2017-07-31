@@ -1,9 +1,9 @@
 <?php
 
-namespace SimpleSoftwareIO\SMS\Drivers;
+namespace Mannysoft\SMS\Drivers;
 
 use Plivo\RestAPI as Plivo;
-use SimpleSoftwareIO\SMS\OutgoingMessage;
+use Mannysoft\SMS\OutgoingMessage;
 
 class PlivoSMS extends AbstractSMS implements DriverInterface
 {

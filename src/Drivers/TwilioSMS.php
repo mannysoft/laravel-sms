@@ -1,9 +1,9 @@
 <?php
 
-namespace SimpleSoftwareIO\SMS\Drivers;
+namespace Mannysoft\SMS\Drivers;
 
 use Services_Twilio;
-use SimpleSoftwareIO\SMS\OutgoingMessage;
+use Mannysoft\SMS\OutgoingMessage;
 
 class TwilioSMS extends AbstractSMS implements DriverInterface
 {

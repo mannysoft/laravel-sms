@@ -1,10 +1,10 @@
 <?php
 
-namespace SimpleSoftwareIO\SMS\Drivers;
+namespace Mannysoft\SMS\Drivers;
 
 use Illuminate\Log\Writer;
-use SimpleSoftwareIO\SMS\DoesNotReceive;
-use SimpleSoftwareIO\SMS\OutgoingMessage;
+use Mannysoft\SMS\DoesNotReceive;
+use Mannysoft\SMS\OutgoingMessage;
 
 class LogSMS implements DriverInterface
 {

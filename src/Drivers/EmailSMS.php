@@ -1,11 +1,11 @@
 <?php
 
-namespace SimpleSoftwareIO\SMS\Drivers;
+namespace Mannysoft\SMS\Drivers;
 
 use Illuminate\Mail\Mailer;
 use InvalidArgumentException;
-use SimpleSoftwareIO\SMS\DoesNotReceive;
-use SimpleSoftwareIO\SMS\OutgoingMessage;
+use Mannysoft\SMS\DoesNotReceive;
+use Mannysoft\SMS\OutgoingMessage;
 
 class EmailSMS implements DriverInterface
 {

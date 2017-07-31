@@ -1,9 +1,9 @@
 <?php
 
-namespace SimpleSoftwareIO\SMS\Drivers;
+namespace Mannysoft\SMS\Drivers;
 
-use SimpleSoftwareIO\SMS\IncomingMessage;
-use SimpleSoftwareIO\SMS\SMSNotSentException;
+use Mannysoft\SMS\IncomingMessage;
+use Mannysoft\SMS\SMSNotSentException;
 
 abstract class AbstractSMS
 {

@@ -1,8 +1,8 @@
 <?php
 
-namespace SimpleSoftwareIO\SMS\Drivers;
+namespace Mannysoft\SMS\Drivers;
 
-use SimpleSoftwareIO\SMS\OutgoingMessage;
+use Mannysoft\SMS\OutgoingMessage;
 
 interface DriverInterface
 {
