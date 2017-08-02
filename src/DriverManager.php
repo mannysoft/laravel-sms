@@ -10,6 +10,7 @@ use Mannysoft\SMS\Drivers\NexmoSMS;
 use Mannysoft\SMS\Drivers\PlivoSMS;
 use Mannysoft\SMS\Drivers\SMSAPISMS;
 use Mannysoft\SMS\Drivers\TwilioSMS;
+use Mannysoft\SMS\Drivers\VoxboneSMS;
 
 class DriverManager extends Manager
 {
@@ -204,6 +205,23 @@ class DriverManager extends Manager
         $provider = new PlivoSMS(
             $config['auth_id'],
             $config['auth_token']
+        );
+
+        return $provider;
+    }
+    
+    /**
+     * Create an instance of the VoxboneSMS driver.
+     *
+     * @return VoxboneSMS
+     */
+    protected function createVoxboneDriver()
+    {
+        $config = $this->app['config']->get('sms.voxbone', []);
+
+        $provider = new VoxboneSMS(
+            $config['username'],
+            $config['password']
         );
 
         return $provider;

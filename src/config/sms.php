@@ -52,6 +52,11 @@ return [
         'auth_token' => env('PLIVO_AUTH_TOKEN', 'Your Plivo Auth Token'),
     ],
     
+    'voxbone' => [
+        'username' => env('VOXBONE_USERNAME', 'Your Voxbone Username'),
+        'password' => env('VOXBONE_PASSWORD', 'Your Voxbone Password'),
+    ],
+    
     'sms_api' => [
         'auth_token' => env('SMS_API_AUTH_TOKEN', 'Your SMS API Auth Token'),
     ],
