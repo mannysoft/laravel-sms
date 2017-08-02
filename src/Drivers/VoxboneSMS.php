@@ -2,15 +2,17 @@
 
 namespace Mannysoft\SMS\Drivers;
 
+use GuzzleHttp\Client;
 use Mannysoft\SMS\OutgoingMessage;
 
 class VoxboneSMS extends AbstractSMS implements DriverInterface
 {
-    /**
-     * The Plivo Library.
-     *
-     * @var Plivo
-     */
+    use MakesRequests;
+    
+    protected $apiBase = 'https://sms.voxbone.com:4443';
+    
+    protected $client;
+    
     protected $voxbone;
 
     /**
@@ -29,47 +31,131 @@ class VoxboneSMS extends AbstractSMS implements DriverInterface
      * @param $username
      * @param $password
      */
-    public function __construct($username, $password)
+    public function __construct(Client $client, $username, $password)
     {
-        $this->voxbone = new Plivo($authId, $authToken);
+        $this->client = $client;
+        $this->setUser($username);
+        $this->setPassword($password);
     }
 
     /**
      * Sends a SMS message.
      *
-     * @param \SimpleSoftwareIO\SMS\OutgoingMessage $message
+     * @param \Mannysoft\SMS\OutgoingMessage $message
      */
     public function send(OutgoingMessage $message)
     {
         $from = $message->getFrom();
         $composeMessage = $message->composeMessage();
 
-        foreach ($message->getTo() as $to) {
-            $response = $this->plivo->send_message([
-                'dst'  => $to,
-                'src'  => $from,
-                'text' => $composeMessage,
-            ]);
+        //Convert to callfire format.
+        $numbers = implode(',', $message->getTo());
 
-            if ($response['status'] != 202) {
-                $this->SMSNotSentException($response['response']['error']);
-            }
+        $data = [
+            'from'       => $from,
+            'to'         => $numbers,
+            'text'       => $composeMessage,
+        ];
+
+        $this->buildCall('/sms/v1/14150000000');
+        $this->buildBody($data);
+
+        $response = $this->postRequest();
+        $body = json_decode($response->getBody(), true);
+        if ($this->hasError($body)) {
+            $this->handleError($body);
         }
+
+        return $response;
     }
 
     /**
-     * Processing the raw information from a request and inputs it into the IncomingMessage object.
+     * Checks if the transaction has an error.
      *
-     * @param $raw
+     * @param $body
+     *
+     * @return bool
      */
-    protected function processReceive($raw)
+    protected function hasError($body)
+    {
+        if ($this->hasAResponseMessage($body) && $this->hasProperty($this->getFirstMessage($body), 'status')) {
+            $firstMessage = $this->getFirstMessage($body);
+
+            return (int) $firstMessage['status'] !== 0;
+        }
+
+        return false;
+    }
+
+    /**
+     * Log the error message which ocurred.
+     *
+     * @param $body
+     */
+    protected function handleError($body)
+    {
+        $firstMessage = $this->getFirstMessage($body);
+        $error = 'An error occurred. Nexmo status code: '.$firstMessage['status'];
+        if ($this->hasProperty($firstMessage, 'error-text')) {
+            $error = $firstMessage['error-text'];
+        }
+
+        $this->throwNotSentException($error, $firstMessage['status']);
+    }
+
+    /**
+     * Check for a message in the response from Nexmo.
+     *
+     * @param $body
+     */
+    protected function hasAResponseMessage($body)
+    {
+        return
+            is_array($body) &&
+            array_key_exists('messages', $body) &&
+            array_key_exists(0, $body['messages']);
+    }
+
+    /**
+     * Get the first message in the response from Nexmo.
+     *
+     * @param $body
+     */
+    protected function getFirstMessage($body)
+    {
+        return $body['messages'][0];
+    }
+
+    /**
+     * Check if the message from Nexmo has a given property.
+     *
+     * @param $message
+     * @param $property
+     *
+     * @return bool
+     */
+    protected function hasProperty($message, $property)
+    {
+        return array_key_exists($property, $message);
+    }
+
+    /**
+     * Creates many IncomingMessage objects and sets all of the properties.
+     *
+     * @param $rawMessage
+     *
+     * @return mixed
+     */
+    protected function processReceive($rawMessage)
     {
         $incomingMessage = $this->createIncomingMessage();
-        $incomingMessage->setRaw($raw);
-        $incomingMessage->setMessage($raw->resource_uri);
-        $incomingMessage->setFrom($raw->message_uuid);
-        $incomingMessage->setId($raw->message_uuid);
-        $incomingMessage->setTo($raw->to_number);
+        $incomingMessage->setRaw($rawMessage);
+        $incomingMessage->setFrom((string) $rawMessage->from);
+        $incomingMessage->setMessage((string) $rawMessage->body);
+        $incomingMessage->setId((string) $rawMessage->{'message-id'});
+        $incomingMessage->setTo((string) $rawMessage->to);
+
+        return $incomingMessage;
     }
 
     /**
@@ -81,23 +167,13 @@ class VoxboneSMS extends AbstractSMS implements DriverInterface
      */
     public function checkMessages(array $options = [])
     {
-        $start = array_key_exists('start', $options) ? $options['start'] : 0;
-        $end = array_key_exists('end', $options) ? $options['end'] : 25;
+        $this->buildCall('/search/messages/'.$this->apiKey.'/'.$this->apiSecret);
 
-        $rawMessages = $this->plivo->get_messages([
-            'offset' => $start,
-            'limit'  => $end,
-        ]);
+        $this->buildBody($options);
 
-        $incomingMessages = [];
+        $rawMessages = json_decode($this->getRequest()->getBody()->getContents());
 
-        foreach ($rawMessages['objects'] as $rawMessage) {
-            $incomingMessage = $this->createIncomingMessage();
-            $this->processReceive($incomingMessage, $rawMessage);
-            $incomingMessages[] = $incomingMessage;
-        }
-
-        return $incomingMessages;
+        return $this->makeMessages($rawMessages->items);
     }
 
     /**
@@ -109,11 +185,9 @@ class VoxboneSMS extends AbstractSMS implements DriverInterface
      */
     public function getMessage($messageId)
     {
-        $rawMessage = $this->plivo->get_message(['record_id' => $messageId]);
-        $incomingMessage = $this->createIncomingMessage();
-        $this->processReceive($incomingMessage, $rawMessage);
+        $this->buildCall('/search/message/'.$this->apiKey.'/'.$this->apiSecret.'/'.$messageId);
 
-        return $incomingMessage;
+        return $this->makeMessage(json_decode($this->getRequest()->getBody()->getContents()));
     }
 
     /**
@@ -125,36 +199,20 @@ class VoxboneSMS extends AbstractSMS implements DriverInterface
      */
     public function receive($raw)
     {
-        if ($this->verify) {
-            $this->validateRequest();
-        }
-
         $incomingMessage = $this->createIncomingMessage();
         $incomingMessage->setRaw($raw->get());
-        $incomingMessage->setMessage($raw->get('resource_uri'));
-        $incomingMessage->setFrom($raw->get('from_number'));
-        $incomingMessage->setId($raw->get('message_uuid'));
-        $incomingMessage->setTo($raw->get('to_number'));
+        $incomingMessage->setMessage($raw->get('text'));
+        $incomingMessage->setFrom($raw->get('msisdn'));
+        $incomingMessage->setId($raw->get('messageId'));
+        $incomingMessage->setTo($raw->get('to'));
 
         return $incomingMessage;
     }
 
-    /**
-     * Checks if a message is authentic from Plivo.
-     *
-     * @throws \InvalidArgumentException
-     */
-    protected function validateRequest()
+    private function setEncoding()
     {
-        $data = $_POST;
-        $url = $this->url;
-        $signature = $_SERVER['X-Plivo-Signature'];
-        $authToken = $this->authToken;
-
-        if (!$this->plivo->validate_signature($url, $data, $signature, $authToken)) {
-            throw new \InvalidArgumentException('This request was not able to verify it came from Plivo.');
+        if (env('NEXMO_ENCODING', 'unicode') === 'unicode') {
+            $this->apiEnding = ['type' => 'unicode'];
         }
-
-        return true;
     }
 }

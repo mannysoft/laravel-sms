@@ -220,6 +220,7 @@ class DriverManager extends Manager
         $config = $this->app['config']->get('sms.voxbone', []);
 
         $provider = new VoxboneSMS(
+            new Client(),
             $config['username'],
             $config['password']
         );
