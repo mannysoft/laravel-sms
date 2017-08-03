@@ -3,10 +3,12 @@
 namespace Mannysoft\SMS\Drivers;
 
 use Services_Twilio;
+use Twilio\Rest\Client;
 use Mannysoft\SMS\OutgoingMessage;
 
 class TwilioSMS extends AbstractSMS implements DriverInterface
 {
+    protected $client;
     /**
      * The Twilio SDK.
      *
@@ -34,6 +36,8 @@ class TwilioSMS extends AbstractSMS implements DriverInterface
      * @var bool
      */
     protected $verify;
+    
+    protected $from;
 
     /**
      * Constructs the TwilioSMS object.
@@ -43,12 +47,11 @@ class TwilioSMS extends AbstractSMS implements DriverInterface
      * @param $url
      * @param bool $verify
      */
-    public function __construct(Services_Twilio $twilio, $authToken, $url, $verify = false)
+    public function __construct($sid, $token, $from, $verify = false)
     {
-        $this->twilio = $twilio;
-        $this->authToken = $authToken;
-        $this->url = $url;
         $this->verify = $verify;
+        $this->from = $from;
+        $this->client = new Client($sid, $token);
     }
 
     /**
@@ -58,16 +61,16 @@ class TwilioSMS extends AbstractSMS implements DriverInterface
      */
     public function send(OutgoingMessage $message)
     {
-        $from = $message->getFrom();
-        $composeMessage = $message->composeMessage();
-
         foreach ($message->getTo() as $to) {
-            $this->twilio->account->messages->create([
-                'To'       => $to,
-                'From'     => $from,
-                'Body'     => $composeMessage,
-                'MediaUrl' => $message->getAttachImages(),
-            ]);
+            $message = $this->client->messages->create(
+              $to, // Text this number
+              array(
+                'from' => $message->getFrom(), // From a valid Twilio number
+                'body' => $message->composeMessage()
+              )
+            );
+
+            $message->sid;
         }
     }
 

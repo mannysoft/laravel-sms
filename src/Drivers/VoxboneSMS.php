@@ -4,6 +4,7 @@ namespace Mannysoft\SMS\Drivers;
 
 use GuzzleHttp\Client;
 use Mannysoft\SMS\OutgoingMessage;
+use Mannysoft\SMS\MakesRequests;
 
 class VoxboneSMS extends AbstractSMS implements DriverInterface
 {
@@ -31,11 +32,11 @@ class VoxboneSMS extends AbstractSMS implements DriverInterface
      * @param $username
      * @param $password
      */
-    public function __construct(Client $client, $username, $password)
+    public function __construct($username, $password)
     {
-        $this->client = $client;
-        $this->setUser($username);
-        $this->setPassword($password);
+        $this->client = new Client(['base_uri' => 'https://sms.voxbone.com:4443']);;
+        $this->username = $username;
+        $this->password = $password;
     }
 
     /**
@@ -45,28 +46,18 @@ class VoxboneSMS extends AbstractSMS implements DriverInterface
      */
     public function send(OutgoingMessage $message)
     {
-        $from = $message->getFrom();
-        $composeMessage = $message->composeMessage();
-
-        //Convert to callfire format.
-        $numbers = implode(',', $message->getTo());
-
-        $data = [
-            'from'       => $from,
-            'to'         => $numbers,
-            'text'       => $composeMessage,
-        ];
-
-        $this->buildCall('/sms/v1/14150000000');
-        $this->buildBody($data);
-
-        $response = $this->postRequest();
-        $body = json_decode($response->getBody(), true);
-        if ($this->hasError($body)) {
-            $this->handleError($body);
+        foreach ($message->getTo() as $to) {
+            $this->client->request('POST', '/sms/v1/' . $to, [
+                'auth' => [$this->username, $this->password, 'digest'],
+                'json' => ['from' => $message->getFrom(), 'msg' => $message->composeMessage(), 'frag' => null],
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept'     => 'application/json',
+                ]
+            ]);
         }
 
-        return $response;
+        return $this->client;
     }
 
     /**

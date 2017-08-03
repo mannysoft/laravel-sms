@@ -167,9 +167,9 @@ class DriverManager extends Manager
         $config = $this->app['config']->get('sms.twilio', []);
 
         return new TwilioSMS(
-            new \Services_Twilio($config['account_sid'], $config['auth_token']),
+            $config['account_sid'],
             $config['auth_token'],
-            $this->app['request']->url(),
+            $config['from'],
             $config['verify']
         );
     }
@@ -220,7 +220,6 @@ class DriverManager extends Manager
         $config = $this->app['config']->get('sms.voxbone', []);
 
         $provider = new VoxboneSMS(
-            new Client(),
             $config['username'],
             $config['password']
         );
@@ -237,7 +236,7 @@ class DriverManager extends Manager
     {
         $config = $this->app['config']->get('sms.sms_api', []);
 
-        $provider = new SMSAPISMS($config['auth_token']);
+        $provider = new SMSAPISMS($config['auth_token'], $config['username'], $config['password']);
 
         return $provider;
     }

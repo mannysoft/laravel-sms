@@ -6,9 +6,15 @@ use SMSApi\Client;
 use SMSApi\Api\SmsFactory;
 use SMSApi\Exception\SmsapiException;
 use Mannysoft\SMS\OutgoingMessage;
+use Mannysoft\SMS\SMSNotSentException;
+use Mannysoft\SMS\MakesRequests;
 
 class SMSAPISMS extends AbstractSMS implements DriverInterface
 {
+    use MakesRequests;
+    
+    protected $apiBase = 'https://api.smsapi.com';
+    
     /**
      * The Plivo Library.
      *
@@ -27,9 +33,11 @@ class SMSAPISMS extends AbstractSMS implements DriverInterface
      * @param $authId
      * @param $authToken
      */
-    public function __construct($authToken)
+    public function __construct($authToken, $username, $password)
     {
         $client = Client::createFromToken($authToken);
+        $client = new Client($username);
+        $client->setPasswordHash(md5($password));
         $smsapi = new SmsFactory;
         $smsapi->setClient($client);
         $this->smsapi = $smsapi;
@@ -44,7 +52,36 @@ class SMSAPISMS extends AbstractSMS implements DriverInterface
     {
         $from = $message->getFrom();
         $composeMessage = $message->composeMessage();
+
+        //Convert to callfire format.
+        $numbers = implode(',', $message->getTo());
+
+        $data = [
+            'from'       => $from,
+            'to'         => $numbers,
+            'msg'       => $composeMessage,
+            'frag'       => null,
+            'delivery_report' => 'none',
+            // 'text'       => $composeMessage,
+        ];
+
+        $this->buildCall('/sms.do?');
+        $this->buildBody($data);
+
+        $response = $this->postRequest();
+        $body = json_decode($response->getBody(), true);
+        if ($this->hasError($body)) {
+            $this->handleError($body);
+        }
+
+        return $response;
         
+        
+        
+        $from = $message->getFrom();
+        
+        $composeMessage = $message->composeMessage();
+        // dd($composeMessage);
         foreach ($message->getTo() as $to) {
             try {
                 $actionSend = $this->smsapi->actionSend();
@@ -55,7 +92,8 @@ class SMSAPISMS extends AbstractSMS implements DriverInterface
                 $response = $actionSend->execute();
                 
             } catch (SmsapiException $exception) {
-                $this->SMSNotSentException($exception->getMessage());
+                dd($exception->getMessage());
+                //$this->SMSNotSentException($exception->getMessage());
             }
         }
     }
