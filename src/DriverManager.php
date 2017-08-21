@@ -9,6 +9,7 @@ use Mannysoft\SMS\Drivers\LogSMS;
 use Mannysoft\SMS\Drivers\NexmoSMS;
 use Mannysoft\SMS\Drivers\PlivoSMS;
 use Mannysoft\SMS\Drivers\SMSAPISMS;
+use Mannysoft\SMS\Drivers\CheapGlobalSMS;
 use Mannysoft\SMS\Drivers\TwilioSMS;
 use Mannysoft\SMS\Drivers\VoxboneSMS;
 
@@ -237,6 +238,20 @@ class DriverManager extends Manager
         $config = $this->app['config']->get('sms.sms_api', []);
 
         $provider = new SMSAPISMS($config['auth_token'], $config['username'], $config['password']);
+
+        return $provider;
+    }
+    
+    /**
+     * Create an instance of the CheapGlobalSMS driver.
+     *
+     * @return SMSAPI
+     */
+    protected function createCheapGlobalSMSDriver()
+    {
+        $config = $this->app['config']->get('sms.cheap_global_sms', []);
+
+        $provider = new CheapGlobalSMS($config['sub_account'], $config['sub_account_pass']);
 
         return $provider;
     }
