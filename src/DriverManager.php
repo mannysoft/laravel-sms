@@ -251,7 +251,7 @@ class DriverManager extends Manager
     {
         $config = $this->app['config']->get('sms.cheap_global_sms', []);
 
-        $provider = new CheapGlobalSMS($config['sub_account'], $config['sub_account_pass']);
+        $provider = new CheapGlobalSMS(new Client(), $config['sub_account'], $config['sub_account_pass']);
 
         return $provider;
     }

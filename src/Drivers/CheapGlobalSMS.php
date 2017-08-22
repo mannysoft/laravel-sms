@@ -17,16 +17,18 @@ class CheapGlobalSMS extends AbstractSMS implements DriverInterface
     
     public $account;
     public $password;
+    protected $client;
     /**
-     * 
-     *
-     * @param $authId
-     * @param $authToken
-     */
-    public function __construct($account, $password)
+    * 
+    *
+    * @param $authId
+    * @param $authToken
+    */
+    public function __construct($client, $account, $password)
     {
-       $this->account = $account;
-       $this->password = $password;
+        $this->client = $client;
+        $this->account = $account;
+        $this->password = $password;
     }
 
     /**
@@ -51,8 +53,7 @@ class CheapGlobalSMS extends AbstractSMS implements DriverInterface
             'action' => 'send_sms',
         ];
         
-        // http://cheapglobalsms.com/api_v1?sub_account=2140_smsto&sub_account_pass=b8w47p27&action=send_sms&sender_id=smsto&message=Hello%2C+there+will+be+a+meeting+today+by+12+noon.&recipients=6392175023198
-        $this->buildCall('/api_v1?');
+        $this->buildCall('/api_v1');
         $this->buildBody($data);
 
         $response = $this->getRequest();
