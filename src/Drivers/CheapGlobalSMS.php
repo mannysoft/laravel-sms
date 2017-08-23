@@ -41,7 +41,7 @@ class CheapGlobalSMS extends AbstractSMS implements DriverInterface
         $from = $message->getFrom();
         $composeMessage = $message->composeMessage();
 
-        //Convert to callfire format.
+        // Convert to callfire format.
         $numbers = implode(',', $message->getTo());
 
         $data = [
@@ -58,9 +58,9 @@ class CheapGlobalSMS extends AbstractSMS implements DriverInterface
 
         $response = $this->getRequest();
         $body = json_decode($response->getBody(), true);
-        if ($this->hasError($body)) {
-            $this->handleError($body);
-        }
+        // if ($this->hasError($body)) {
+        //     $this->handleError($body);
+        // }
 
         return $response;
     }
